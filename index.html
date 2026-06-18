@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ScanPay">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1C1C1E">
+<meta name="description" content="เครื่องคิดเงินพร้อมสร้าง QR พร้อมเพย์ รับเงินได้ทุกธนาคาร">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- iOS Icons -->
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png">
+
+<!-- Favicon -->
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
+
+<title>ScanPay — เครื่องคิดเงิน QR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; user-select:none; }
+
+:root {
+  --bg:     #1C1C1E;
+  --bg2:    #2C2C2E;
+  --bg3:    #3A3A3C;
+  --num:    #3A3A3C;
+  --op:     #FF9F0A;
+  --spec:   #636366;
+  --txt:    #FFFFFF;
+  --txt2:   rgba(255,255,255,.55);
+  --sep:    rgba(255,255,255,.1);
+  --blue:   #0A84FF;
+  --card:   #1C1C1E;
+  --green:  #1A7A35;
+  --red:    #FF453A;
+}
+
+body.theme-light {
+  --bg:     #F3F3F3;
+  --bg2:    #FFFFFF;
+  --bg3:    #F0F0F0;
+  --num:    #FFFFFF;
+  --op:     #F0F0F0;
+  --spec:   #F0F0F0;
+  --txt:    #1A1A1A;
+  --txt2:   #767676;
+  --sep:    rgba(0,0,0,.08);
+  --blue:   #0078D4;
+  --card:   #FAFAFA;
+  --green:  #1A7A35;
+  --red:    #FF453A;
+  background: #F3F3F3;
+  color: #1A1A1A;
+}
+body.theme-light #scr-calc       { background: #F3F3F3; }
+body.theme-light #scr-qr         { background: #F3F3F3; }
+body.theme-light .qr-header      { background: #F3F3F3; border-bottom-color: rgba(0,0,0,.08); }
+body.theme-light .qr-card        { background: #FAFAFA; }
+body.theme-light #scr-signout    { background: #FFFFFF; }
+
+body.theme-light #scr-signout div[style*="font-size:26px"] { color:#1A1A1A !important; }
+body.theme-light #scr-signout div[style*="color:rgba(255,255,255,.4)"] { color:#767676 !important; }
+
+body.theme-light #scr-signout div[style*="background:#1C1C1E"] { background:#F5F5F5 !important; border-color:rgba(0,0,0,.08) !important; }
+body.theme-light #scr-signout div[style*="background:#111"]     { background:#FFFFFF !important; border-color:rgba(0,0,0,.12) !important; }
+
+body.theme-light #scr-signout div[style*="color:rgba(255,255,255,.4)"][style*="uppercase"] { color:#767676 !important; }
+
+body.theme-light #input-promptpay { color:#1A1A1A !important; }
+body.theme-light #input-name      { color:#1A1A1A !important; }
+body.theme-light #input-promptpay::placeholder { color:rgba(0,0,0,.3) !important; }
+body.theme-light #input-name::placeholder      { color:rgba(0,0,0,.3) !important; }
+
+body.theme-light #scr-signout svg[style*="opacity:.45"] { opacity:.35 !important; filter:invert(1); }
+
+body.theme-light #input-error { color:#CC0000 !important; }
+
+body.theme-light #scr-signout div[style*="color:rgba(255,255,255,.2)"] { color:rgba(0,0,0,.3) !important; }
+body.theme-light #scr-signout svg[style*="opacity:.5"] { filter:invert(1); opacity:.4 !important; }
+
+body.theme-light #scr-signout button[onclick*="signIn"] { background:#F0F0F0 !important; color:#1A1A1A !important; border:1px solid #ADADAD !important; border-radius:4px !important; }
+body.theme-light .display-label  { color: #333333; }
+body.theme-light .display-amount { color: #1A1A1A; text-shadow: none; }
+body.theme-light #running-total  { color: #767676 !important; visibility:visible; }
+body.theme-light .key-num  { background:#FFFFFF; color:#1A1A1A; text-shadow:none; box-shadow:0 1px 0 #E0E0E0,0 2px 4px rgba(0,0,0,.08); border:1px solid #E0E0E0; }
+body.theme-light .key-op   { background:#F0F0F0; color:#1A1A1A; text-shadow:none; box-shadow:0 1px 0 #E0E0E0,0 2px 4px rgba(0,0,0,.08); border:1px solid #E0E0E0; font-size:29px; font-weight:300; }
+body.theme-light .key-spec { background:#F0F0F0; color:#1A1A1A; text-shadow:none; box-shadow:0 1px 0 #E0E0E0,0 2px 4px rgba(0,0,0,.08); border:1px solid #E0E0E0; }
+body.theme-light .key-dot  { text-shadow:none; }
+body.theme-light .key-eq   { background:#0078D4; color:#fff; text-shadow:none; border:none; }
+body.theme-light button[onclick*="keyEqual"] { background:#0078D4 !important; color:#fff !important; text-shadow:none !important; border:none !important; }
+body.theme-light .acct-popup  { background:#FFFFFF; box-shadow:0 8px 32px rgba(0,0,0,.15); }
+body.theme-light #hamburger-btn span { background:rgba(0,0,0,.7) !important; }
+body.theme-light .ios-btn-gray { background:#F0F0F0; color:#1A1A1A; }
+body.theme-light #running-total { color:#767676 !important; }
+body.theme-light #hamburger-btn span { background:#555 !important; }
+
+body.theme-light #scr-qr                          { background:#F3F3F3; }
+body.theme-light .qr-header                        { background:#F3F3F3 !important; border-bottom-color:rgba(0,0,0,.08) !important; }
+body.theme-light .qr-back                          { color:#0078D4; }
+body.theme-light #qr-title                         { color:#1A1A1A; }
+body.theme-light #info-card-body                   { background:#FFFFFF; }
+body.theme-light .qr-top                           { background:#FFFFFF; }
+body.theme-light #qr-label-pp                      { color:#333333; }
+body.theme-light .amount-currency                  { color:#333333; }
+body.theme-light .amount-num                       { color:#1A1A1A; }
+body.theme-light #qr-amount-words                  { color:#767676; }
+body.theme-light .qr-card                          { background:#FFFFFF; box-shadow:0 2px 12px rgba(0,0,0,.08); }
+body.theme-light .qr-body                          { background:#FFFFFF; }
+body.theme-light div[style*="margin:12px 16px"]    { background:#FFFFFF !important; }
+body.theme-light button[onclick*="toggleInfoCard"] { background:#FFFFFF !important; border-bottom-color:rgba(0,0,0,.08) !important; }
+body.theme-light button[onclick*="toggleInfoCard"] span { color:#767676 !important; }
+body.theme-light #info-chevron                     { fill:rgba(0,0,0,.4) !important; }
+body.theme-light div[style*="Accept all bank"]     { color:#767676 !important; }
+body.theme-light .ios-btn[onclick*="goScreen"]          { background:#FFFFFF !important; color:#1A1A1A !important; border:1px solid #D0D0D0 !important; border-radius:4px !important; font-weight:400 !important; }
+body.theme-light .ios-btn-green[onclick*="confirmPaid"] { background:#FFFFFF !important; color:#1A1A1A !important; border:2px solid #0078D4 !important; border-radius:4px !important; font-weight:600 !important; }
+
+body.theme-light #qr-label-pp    { color:#333333 !important; display:block !important; }
+body.theme-light .amount-currency { color:#1A1A1A !important; }
+body.theme-light .amount-num      { color:#1A1A1A !important; }
+body.theme-light #qr-amount       { color:#1A1A1A !important; }
+body.theme-light #qr-amount-words { color:#767676 !important; display:block !important; }
+body.theme-light .qr-top          { background:#FFFFFF !important; }
+body.theme-light #info-card-body  { background:#FFFFFF !important; }
+body.theme-light #info-card-body *[style*="color:rgba(255,255,255"] { color:#767676 !important; }
+body.theme-light #info-card-body *[style*="color:#fff"]             { color:#1A1A1A !important; }
+body.theme-light #info-card-body div[style*="font-size:11px"]       { color:#767676 !important; }
+
+body.theme-light .acct-popup { background:#FFFFFF !important; box-shadow:0 8px 32px rgba(0,0,0,.15) !important; }
+
+body.theme-light .acct-popup > div[style*="border-bottom"] { border-bottom-color:rgba(0,0,0,.08) !important; }
+body.theme-light #popup-name  { color:#1A1A1A !important; }
+body.theme-light #popup-promptpay { color:#767676 !important; }
+body.theme-light .acct-close  { color:#767676 !important; }
+
+body.theme-light .acct-popup div[style*="height:1px"] { background:rgba(0,0,0,.08) !important; }
+
+body.theme-light .acct-popup button[style*="transparent"] { color:#1A1A1A !important; }
+body.theme-light .acct-popup button svg { fill:rgba(0,0,0,.5) !important; }
+body.theme-light .acct-popup span[style*="rgba(255,255,255"] { color:#1A1A1A !important; }
+body.theme-light #lang-chevron  { fill:rgba(0,0,0,.4) !important; }
+body.theme-light #settings-chevron { fill:rgba(0,0,0,.4) !important; }
+body.theme-light #lang-current-name { color:#1A1A1A !important; }
+
+body.theme-light #lang-list { background:#F5F5F5 !important; border-radius:8px; }
+body.theme-light #lang-list button { color:#1A1A1A !important; border-bottom-color:rgba(0,0,0,.06) !important; }
+body.theme-light #lang-list button span { color:#1A1A1A !important; }
+
+body.theme-light #settings-panel div[style*="rgba(255,255,255,.35)"] { color:rgba(0,0,0,.4) !important; }
+body.theme-light #settings-panel div[style*="rgba(255,255,255,.4)"]  { color:rgba(0,0,0,.5) !important; }
+body.theme-light #settings-panel > div > div[style*="background:#111"] { background:#F5F5F5 !important; border-color:rgba(0,0,0,.1) !important; }
+body.theme-light #settings-panel label span { color:#1A1A1A !important; }
+body.theme-light #settings-panel div[style*="rgba(255,255,255,.87)"] { color:#1A1A1A !important; }
+body.theme-light #settings-panel div[style*="rgba(255,255,255,.35)"] { color:#767676 !important; }
+
+body.theme-light #verified-tip { background:#1A1A1A !important; color:#fff !important; }
+
+html,body { height:100%; overflow:hidden; background:var(--bg); font-family:'Inter',sans-serif; color:var(--txt); }
+
+.screen { position:absolute; inset:0; display:flex; flex-direction:column; }
+.screen.hidden { display:none !important; }
+.screen.fade-in { animation: fadeUp .25s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+#scr-calc { background: var(--bg); }
+
+.display-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 24px 4px;
+  min-height: 0;
+}
+.display-label {
+  font-size: 13px;
+  color: var(--txt2);
+  letter-spacing: .3px;
+  margin-bottom: 4px;
+}
+.display-amount {
+  font-size: 65px;
+  font-weight: 500;
+  letter-spacing: -3px;
+  line-height: 1;
+  color: #FFFFFF;
+  text-shadow: 0 0 8px rgba(255,255,255,.21), 0 0 18px rgba(255,255,255,.12);
+  word-break: break-all;
+  transition: font-size .15s;
+}
+.display-amount.small  { font-size: 47px; }
+.display-amount.xsmall { font-size: 34px; }
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 6px 28px 20px;
+  flex-shrink: 0;
+}
+.key {
+  height: auto;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  border: none;
+  font-family: inherit;
+  font-size: 29px;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .1s, transform .08s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 0 rgba(0,0,0,.35);
+}
+.key:active { opacity: .7; transform: scale(.94); }
+.key-num  { background: var(--num);  color: #fff; text-shadow: 0 0 8px rgba(255,255,255,.21), 0 0 18px rgba(255,255,255,.12); }
+.key-spec { background: var(--spec); color: var(--txt); font-size: 20px; font-weight: 400; }
+.key-op   { background: var(--op);   color: #fff; text-shadow: 0 0 8px rgba(255,255,255,.21), 0 0 18px rgba(255,255,255,.12); font-size: 29px; font-weight: 300; }
+.key-eq   { background: var(--eq);   color: #fff; font-size: 31px; font-weight: 400; text-shadow: 0 0 8px rgba(255,255,255,.21), 0 0 18px rgba(255,255,255,.12); }
+.key-zero { grid-column: span 2; aspect-ratio: unset; border-radius: 16px; justify-content: flex-start; padding-left: 28px; }
+.key-del  { background: var(--spec); }
+.key-dot  { font-size: 25px; font-weight: 300; text-shadow: 0 0 8px rgba(255,255,255,.21), 0 0 18px rgba(255,255,255,.12); }
+
+#scr-qr {
+  background: #000;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.qr-header {
+  padding: 12px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: .5px solid var(--sep);
+  flex-shrink: 0;
+  position: sticky; top: 0; background: #000; z-index: 10;
+}
+.qr-back {
+  font-size: 17px; color: var(--blue);
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; display: flex; align-items: center; gap: 3px;
+}
+
+.qr-card {
+  margin: 12px 16px;
+  background: #1C1C1E;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.qr-top {
+  padding: 16px 18px 14px;
+  text-align: center;
+  border-bottom: .5px solid var(--sep);
+}
+.amount-display { margin-bottom: 2px; }
+.amount-currency { font-size: 20px; font-weight: 300; color: rgba(255,255,255,1); vertical-align: top; margin-top: 8px; display: inline-block; }
+.amount-num { font-size: 52px; font-weight: 300; letter-spacing: -2px; }
+
+.qr-body {
+  padding: 16px;
+  text-align: center;
+}
+.qr-frame {
+  display: inline-block;
+  background: #fff;
+  padding: 10px;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.4);
+  max-width: calc(100vw - 64px);
+}
+
+@keyframes pulse-g { 0%,100%{box-shadow:0 0 0 0 rgba(52,199,89,.45)} 50%{box-shadow:0 0 0 12px rgba(52,199,89,0)} }
+.pulse-g { animation: pulse-g 2s infinite; }
+
+#scr-signout {
+  background: var(--bg);
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#scr-success {
+  background: #000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.success-hero {
+  margin: 24px 16px 0;
+  background: #1C1C1E;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.ios-btn {
+  width: 100%;
+  padding: 16px;
+  border: none; border-radius: 14px;
+  font-family: inherit; font-size: 17px; font-weight: 600;
+  cursor: pointer; letter-spacing: -.2px;
+  transition: opacity .15s, transform .1s;
+}
+.ios-btn:active { opacity: .75; transform: scale(.98); }
+.ios-btn-green { background: var(--green); color: #fff; }
+.ios-btn-gray  { background: #2C2C2E; color: rgba(255,255,255,.7); }
+.ios-btn-blue  { background: var(--blue); color: #fff; }
+
+.acct-btn {
+  width:32px; height:32px; border-radius:50%;
+  background:#0f523d; border:2px solid rgba(255,255,255,.3); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:#fff; flex-shrink:0;
+  font-family:inherit;
+}
+.acct-popup {
+  position:fixed; top:46px; right:12px; z-index:500;
+  width:300px;
+  background:#212121;
+  border-radius:12px;
+  padding:0;
+  box-shadow:0 8px 32px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.4);
+  display:none;
+  overflow:hidden;
+}
+.acct-popup.open { display:block; animation:acctIn .2s ease; }
+@keyframes acctIn { from{opacity:0;transform:scale(.95) translateY(-6px)} to{opacity:1;transform:none} }
+.acct-close {
+  position:absolute; top:10px; right:10px;
+  background:none; border:none; cursor:pointer;
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:rgba(255,255,255,.55); font-size:13px;
+}
+.acct-close:hover { background:rgba(255,255,255,.1); }
+.acct-row { display:flex; gap:0; width:100%; }
+.acct-half {
+  flex:1; background:rgba(255,255,255,.08); border:none;
+  padding:12px 10px; font-size:14px; font-weight:500;
+  color:rgba(255,255,255,.87); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family:inherit;
+  transition:background .15s;
+}
+.acct-half:hover { background:rgba(255,255,255,.12); }
+.acct-half:first-child { border-radius:0 0 0 12px; }
+.acct-half:last-child  { border-radius:0 0 12px 0; }
+
+@keyframes keyPress {
+  0%   { transform:scale(1); }
+  40%  { transform:scale(.88); }
+  70%  { transform:scale(1.06); }
+  100% { transform:scale(1); }
+}
+@keyframes opShake {
+  0%   { transform:scale(.88) rotate(0deg); }
+  20%  { transform:scale(1.12) rotate(-6deg); }
+  40%  { transform:scale(1.12) rotate(6deg); }
+  60%  { transform:scale(1.08) rotate(-3deg); }
+  80%  { transform:scale(1.05) rotate(2deg); }
+  100% { transform:scale(1) rotate(0deg); }
+}
+@keyframes eqPulse {
+  0%   { transform:scale(.88); }
+  50%  { transform:scale(1.08); box-shadow:0 0 18px rgba(255,255,255,.21); }
+  100% { transform:scale(1); }
+}
+.key { transition: none; }
+.key:active { opacity:1 !important; transform:scale(.88) !important; }
+.key-press-anim   { animation:keyPress .25s cubic-bezier(.34,1.56,.64,1) both !important; }
+.key-op-anim      { animation:opShake .35s cubic-bezier(.34,1.56,.64,1) both !important; }
+.key-eq-anim      { animation:eqPulse .3s cubic-bezier(.34,1.56,.64,1) both !important; }
+</style>
+</head>
+<body>
+
+
+<!-- ════════════════════════════════════════════════════════════════════
+     POPUP — hamburger button + dropdown card
+     ════════════════════════════════════════════════════════════════════ -->
+<button id="hamburger-btn" onclick="toggleAcctPopup(event)" style="
+  position:fixed;top:10px;right:14px;z-index:300;
+  background:none;border:none;cursor:pointer;
+  display:flex;flex-direction:column;gap:5px;
+  padding:6px;
+">
+  <span style="display:block;width:20px;height:2px;background:rgba(255,255,255,.55);border-radius:2px;"></span>
+  <span style="display:block;width:20px;height:2px;background:rgba(255,255,255,.55);border-radius:2px;"></span>
+  <span style="display:block;width:20px;height:2px;background:rgba(255,255,255,.55);border-radius:2px;"></span>
+</button>
+
+<div class="acct-popup" id="acct-popup">
+  <button class="acct-close" onclick="toggleAcctPopup(event)">✕</button>
+
+  <!-- Header -->
+  <div style="padding:16px 40px 16px 16px;border-bottom:1px solid rgba(255,255,255,.08);">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <div style="width:36px;height:36px;border-radius:8px;background:rgba(10,132,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg fill="#0A84FF" width="18" height="18" viewBox="0 0 24 24">
+          <path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zM11.5 1L2 6v2h19V6l-9.5-5z"/>
+        </svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;flex:1;min-width:0;">
+        <div id="popup-name" style="font-size:14px;font-weight:600;color:rgba(255,255,255,.87);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;"></div>
+        <div style="position:relative;display:inline-flex;flex-shrink:0;" id="verified-wrap">
+          <svg id="verified-badge" width="14" height="14" viewBox="0 0 24 24" style="cursor:pointer;" onclick="toggleVerifiedTip(event)">
+            <circle cx="12" cy="12" r="12" fill="#aaaaaa"/>
+            <path d="M9.5 16.5l-4-4 1.41-1.41L9.5 13.67l7.59-7.59L18.5 7.5z" fill="#fff"/>
+          </svg>
+          <div id="verified-tip" style="display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#fff;color:#111;font-size:12px;font-weight:500;padding:4px 10px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.35);pointer-events:none;z-index:999;">
+            <div style="position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom-color:#fff;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="popup-promptpay" style="display:none;font-size:12px;color:rgba(255,255,255,.45);letter-spacing:.8px;font-family:monospace;"></div>
+  </div>
+
+  <!-- Sign out -->
+  <div style="padding:4px 8px 4px;">
+    <button onclick="signOut(event)" style="
+      width:100%;background:transparent;border:none;
+      padding:10px 14px;border-radius:8px;
+      display:flex;align-items:center;gap:12px;
+      cursor:pointer;font-family:inherit;
+      transition:background .15s;
+    " onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='transparent'">
+      <svg fill="rgba(255,255,255,.7)" width="18" height="18" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+      <span id="signout-label" style="font-size:14px;font-weight:400;color:rgba(255,255,255,.87);">Sign out</span>
+    </button>
+  </div>
+
+  <!-- Divider -->
+  <div style="height:1px;background:rgba(255,255,255,.08);margin:0 8px;"></div>
+
+  <!-- Settings -->
+  <div style="padding:4px 8px 8px;">
+    <button onclick="toggleSettings(event)" style="
+      width:100%;background:transparent;border:none;
+      padding:10px 14px;border-radius:8px;
+      display:flex;align-items:center;gap:12px;
+      cursor:pointer;font-family:inherit;
+      transition:background .15s;
+    " onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='transparent'">
+      <svg fill="rgba(255,255,255,.7)" width="18" height="18" viewBox="0 0 24 24">
+        <path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.97 6.97 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 8.87a.47.47 0 0 0 .12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+      </svg>
+      <span id="settings-label" style="flex:1;font-size:14px;color:rgba(255,255,255,.87);text-align:left;">การตั้งค่า</span>
+      <svg id="settings-chevron" fill="rgba(255,255,255,.4)" width="14" height="14" viewBox="0 0 24 24" style="transition:transform .2s;flex-shrink:0;"><path d="M10 17l5-5-5-5v10z"/></svg>
+    </button>
+
+    <!-- Settings panel -->
+    <div id="settings-panel" style="display:none;padding:4px 6px 10px;">
+
+      <!-- Language -->
+      <div style="padding:4px 8px 8px;">
+        <button id="lang-row-btn" onclick="toggleLangExpand(event)" style="
+          width:100%;background:transparent;border:none;
+          padding:10px 14px;border-radius:8px;
+          display:flex;align-items:center;gap:12px;
+          cursor:pointer;font-family:inherit;
+          transition:background .15s;
+        " onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='transparent'">
+          <svg fill="rgba(255,255,255,.7)" width="18" height="18" viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+          <span id="lang-row-label" style="flex:1;font-size:14px;color:rgba(255,255,255,.87);text-align:left;">
+            Display language: <span id="lang-current-name">ไทย</span>
+          </span>
+          <svg id="lang-chevron" fill="rgba(255,255,255,.4)" width="14" height="14" viewBox="0 0 24 24" style="transition:transform .2s;"><path d="M10 17l5-5-5-5v10z"/></svg>
+        </button>
+        <div id="lang-list" style="display:none;margin-top:2px;"></div>
+      </div>
+
+      <!-- Theme -->
+      <div style="margin-bottom:8px;">
+        <div id="theme-section-label" style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:5px;padding-left:2px;">ธีมแอป</div>
+        <div style="width:100%;padding:10px 14px;border-radius:8px;display:flex;align-items:center;gap:12px;background:#111;border:0.5px solid rgba(255,255,255,.1);">
+          <svg id="theme-icon" fill="rgba(255,255,255,.7)" width="18" height="18" viewBox="0 0 24 24">
+            <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+          </svg>
+          <span id="theme-mode-label" style="flex:1;font-size:14px;color:rgba(255,255,255,.87);">โหมดสว่าง</span>
+          <div id="theme-toggle" onclick="toggleThemeSwitch(event)" style="width:44px;height:26px;border-radius:13px;background:#3A3A3C;flex-shrink:0;cursor:pointer;position:relative;transition:background .2s;">
+            <div id="theme-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div>
+        <div id="about-section-label" style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:5px;padding-left:2px;">เกี่ยวกับ</div>
+        <div style="background:#111;border-radius:8px;padding:10px 12px;border:0.5px solid rgba(255,255,255,.1);">
+          <div style="font-size:13px;color:rgba(255,255,255,.87);font-weight:500;">ScanPay</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:3px;">© 2026 สงวนลิขสิทธิ์</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;">เวอร์ชัน 1.0.0</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SCREEN: SIGNED OUT ════════ -->
+<div id="scr-signout" class="screen hidden" style="background:var(--bg);flex-direction:column;justify-content:center;padding:0;">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:38px 29px;">
+    <div style="text-align:center;margin-bottom:19px;">
+      <div id="signout-title" style="font-size:22px;font-weight:600;color:#333333;letter-spacing:-.3px;margin-bottom:7px;">เครื่องคิดเงิน QR พร้อมเพย์</div>
+      <div id="signout-subtitle" style="font-size:13px;color:rgba(255,255,255,.4);">กรอกข้อมูลพร้อมเพย์เพื่อเริ่มใช้งาน</div>
+    </div>
+    <div style="background:#F5F5F5;border-radius:4px;padding:24px 22px;border:1px solid #ADADAD;margin-bottom:19px;">
+      <div style="margin-bottom:19px;">
+        <div id="label-promptpay" style="font-size:13px;font-weight:600;color:#1A1A1A;letter-spacing:.3px;margin-bottom:10px;">หมายเลขพร้อมเพย์</div>
+        <div style="display:flex;align-items:center;gap:12px;background:#FFFFFF;border-radius:2px;border:1px solid #ADADAD;padding:10px 14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:.4;">
+            <rect x="5" y="2" width="14" height="20" rx="3" stroke="#555" stroke-width="1.5"/>
+            <circle cx="12" cy="17" r="1" fill="#555"/>
+          </svg>
+          <input id="input-promptpay" type="tel" inputmode="numeric" maxlength="13"
+            placeholder="เบอร์โทรศัพท์ หรือเลขบัตร 13 หลัก"
+            style="background:transparent;border:none;color:#1A1A1A;font-size:13px;font-family:inherit;width:100%;outline:none;letter-spacing:.3px;"/>
+        </div>
+      </div>
+      <div>
+        <div id="label-accountname" style="font-size:13px;font-weight:600;color:#1A1A1A;letter-spacing:.3px;margin-bottom:10px;">ชื่อบัญชี</div>
+        <div style="display:flex;align-items:center;gap:12px;background:#FFFFFF;border-radius:2px;border:1px solid #ADADAD;padding:10px 14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:.4;">
+            <circle cx="12" cy="8" r="4" stroke="#555" stroke-width="1.5"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#555" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <input id="input-name" type="text"
+            placeholder="ชื่อ-นามสกุล"
+            style="background:transparent;border:none;color:#1A1A1A;font-size:13px;font-family:inherit;width:100%;outline:none;letter-spacing:.3px;"/>
+        </div>
+      </div>
+    </div>
+    <style>#input-promptpay::placeholder,#input-name::placeholder{color:#9E9E9E;}</style>
+    <div id="input-error" style="font-size:14px;color:#FF453A;margin-bottom:14px;min-height:18px;padding:0 4px;"></div>
+    <button id="btn-start" onclick="signIn()" style="
+      background:#F0F0F0;color:#1A1A1A;
+      border:1px solid #ADADAD;border-radius:4px;
+      font-size:19px;font-weight:400;
+      padding:18px;width:100%;cursor:pointer;
+      font-family:inherit;letter-spacing:-.2px;
+      box-shadow:0 2px 0 #999, inset 0 1px 0 rgba(255,255,255,.8);
+      transform:translateY(0);transition:box-shadow .1s, transform .1s;
+    " onmousedown="this.style.boxShadow='none';this.style.transform='translateY(2px)';this.style.background='#E0E0E0'"
+       onmouseup="this.style.boxShadow='0 2px 0 #999, inset 0 1px 0 rgba(255,255,255,.8)';this.style.transform='translateY(0)';this.style.background='#F0F0F0'"
+       onmouseleave="this.style.boxShadow='0 2px 0 #999, inset 0 1px 0 rgba(255,255,255,.8)';this.style.transform='translateY(0)';this.style.background='#F0F0F0'"
+    >เริ่มใช้งาน</button>
+    <button id="btn-howto" onclick="showHowto()" style="background:transparent;color:#0078D4;border:none;font-size:14px;font-weight:500;padding:14px 0 0;width:100%;cursor:pointer;font-family:inherit;text-decoration:underline;">วิธีการใช้งาน</button>
+    <div id="signout-footer" style="text-align:center;margin-top:19px;font-size:14px;color:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;gap:5px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="opacity:.5;flex-shrink:0;">
+        <rect x="5" y="11" width="14" height="10" rx="2" stroke="white" stroke-width="1.8"/>
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="16" r="1.2" fill="white"/>
+      </svg>
+      <span>ข้อมูลของคุณถูกเก็บไว้บนอุปกรณ์นี้เท่านั้น</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SCREEN: CALCULATOR ════════ -->
+<div id="scr-calc" class="screen">
+
+  <div class="display-area">
+    <div class="display-label" id="calc-label">เครื่องคิดเงิน</div>
+    <div class="display-amount" id="display">0</div>
+  </div>
+
+  <div id="running-total" style="visibility:hidden;padding:6px 24px 0;font-size:15px;font-weight:600;color:rgba(255,255,255,.85);text-align:right;letter-spacing:.3px;"></div>
+
+  <div class="numpad" style="grid-template-columns:repeat(4,1fr);">
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('1')">1</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('2')">2</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('3')">3</button>
+    <button class="key key-op"  onclick="animKey(this,'op');keyOp('×')" style="font-size:27px;">×</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('4')">4</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('5')">5</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('6')">6</button>
+    <button class="key key-op"  onclick="animKey(this,'op');keyOp('−')">−</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('7')">7</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('8')">8</button>
+    <button class="key key-num" onclick="animKey(this,'num');keyNum('9')">9</button>
+    <button class="key key-op"  onclick="animKey(this,'op');keyOp('+')">+</button>
+    <button class="key key-spec" onclick="animKey(this,'spec');keySpec('CLEAR')" id="key-ac" style="font-size:22px;font-weight:600;">C</button>
+    <button class="key key-num"  onclick="animKey(this,'num');keyNum('0')">0</button>
+    <button class="key key-spec key-dot" onclick="animKey(this,'spec');keyDot()">.</button>
+    <button class="key key-op"   onclick="animKey(this,'eq');keyEqual()" style="font-size:30px;">=</button>
+    <button class="key key-eq" id="btn-createqr" style="grid-column:span 4;aspect-ratio:unset;width:100%;height:76px;border-radius:16px;font-size:17px;font-weight:700;background:#FFFFFF;color:#1C1C1E;" onclick="animKey(this,'eq');keyQR()">
+      สร้าง QR ชำระเงิน
+    </button>
+  </div>
+</div>
+
+<!-- ════════ SCREEN: QR PAYMENT ════════ -->
+<div id="scr-qr" class="screen hidden">
+  <div class="qr-header">
+    <button class="qr-back" onclick="goScreen('calc')">
+      <span style="font-size:20px;">‹</span> <span id="qr-back-txt">กลับ</span>
+    </button>
+    <div id="qr-title" style="font-size:17px;font-weight:600;"></div>
+    <div style="width:60px;"></div>
+  </div>
+
+  <!-- Info card -->
+  <div style="margin:12px 16px 0;background:#1C1C1E;border-radius:20px;overflow:hidden;">
+    <button onclick="toggleInfoCard()" style="width:100%;background:transparent;border:none;cursor:pointer;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:.5px solid rgba(255,255,255,.08);">
+      <span id="qr-details-label" style="font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.5px;">รายละเอียด</span>
+      <svg id="info-chevron" width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,.35)" style="transition:transform .25s;flex-shrink:0;"><path d="M7 10l5 5 5-5z"/></svg>
+    </button>
+    <div id="info-card-body" style="overflow:hidden;transition:max-height .3s ease;max-height:200px;">
+      <div class="qr-top" style="border-bottom:none;">
+        <div id="qr-label-pp" style="display:none;font-size:14px;color:#fff;margin-bottom:6px;"></div>
+        <div class="amount-display">
+          <span class="amount-currency">฿</span>
+          <span class="amount-num" id="qr-amount"></span>
+        </div>
+        <div id="qr-amount-words" style="display:none;font-size:13px;color:rgba(255,255,255,.55);margin-top:2px;"></div>
+        <div id="qr-accept-banks" style="margin-top:8px;font-size:11px;color:rgba(255,255,255,.35);letter-spacing:.3px;">
+          Accept all bank &nbsp;|&nbsp; รับเงินได้ทุกธนาคาร
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR card -->
+  <div class="qr-card" style="margin-top:10px;">
+    <div class="qr-body">
+      <div class="qr-frame">
+        <div id="qr-container" style="line-height:0;width:min(240px,calc(100vw - 120px));height:min(240px,calc(100vw - 120px));"></div>
+      </div>
+      <div id="qr-account" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div style="display:none;">
+    <span id="qr-ref"></span>
+    <span id="qr-time"></span>
+  </div>
+
+  <!-- Buttons -->
+  <div style="padding:14px 16px 28px;display:flex;gap:10px;">
+    <button class="ios-btn" id="btn-qr-cancel" onclick="goScreen('calc')" style="flex:1;padding:13px;font-size:15px;background:#2C2C2E;color:rgba(255,255,255,.7);">ยกเลิก</button>
+    <button class="ios-btn ios-btn-green" id="btn-qr-confirm" onclick="confirmPaid()" style="flex:1;padding:13px;font-size:15px;font-weight:700;background:#FFFFFF;color:#1C1C1E;">ยืนยันรับเงินสำเร็จ</button>
+  </div>
+</div>
+
+<!-- ════════ SCREEN: SUCCESS ════════ -->
+<div id="scr-success" class="screen hidden">
+  <div class="qr-header">
+    <div style="width:60px;"></div>
+    <div id="success-title-header" style="font-size:17px;font-weight:600;">รายการสำเร็จ</div>
+    <div style="width:60px;"></div>
+  </div>
+  <div class="success-hero">
+    <div style="background:#1A7A35;padding:28px 24px 24px;text-align:center;">
+      <div style="font-size:52px;margin-bottom:8px;">✅</div>
+      <div id="success-title" style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.5px;">รับเงินสำเร็จ</div>
+      <div id="success-subtitle" style="font-size:14px;color:rgba(255,255,255,.8);margin-top:4px;">Payment Received</div>
+    </div>
+    <div style="padding:22px 20px;text-align:center;border-bottom:.5px solid rgba(255,255,255,.08);">
+      <div id="success-amount-label" style="font-size:13px;color:rgba(255,255,255,.4);margin-bottom:6px;">ยอดที่ได้รับ</div>
+      <div>
+        <span style="font-size:22px;font-weight:300;color:rgba(255,255,255,.4);vertical-align:top;margin-top:8px;display:inline-block;">฿</span>
+        <span id="s-amount" style="font-size:56px;font-weight:300;letter-spacing:-2px;"></span>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;padding:13px 16px;border-bottom:.5px solid rgba(255,255,255,.08);">
+        <span id="success-datetime-label" style="font-size:15px;color:rgba(255,255,255,.5);">วันที่ / เวลา</span>
+        <div style="text-align:right;">
+          <div id="s-date" style="font-size:15px;color:rgba(255,255,255,.8);"></div>
+          <div id="s-time" style="font-size:13px;color:rgba(255,255,255,.4);margin-top:1px;"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:13px 16px;border-bottom:.5px solid rgba(255,255,255,.08);">
+        <span id="success-channel-label" style="font-size:15px;color:rgba(255,255,255,.5);">ช่องทาง</span>
+        <span id="success-channel-value" style="font-size:15px;color:rgba(255,255,255,.8);">พร้อมเพย์</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:13px 16px;">
+        <span id="success-ref-label" style="font-size:15px;color:rgba(255,255,255,.5);">อ้างอิง</span>
+        <span id="s-ref" style="font-size:13px;font-family:monospace;color:rgba(255,255,255,.6);"></span>
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px;">
+    <button id="save-btn" class="ios-btn ios-btn-blue" onclick="captureAndSave()">
+      💾 บันทึกใบเสร็จ
+    </button>
+  </div>
+  <div style="padding:0 16px 32px;">
+    <button id="newtx-btn" class="ios-btn ios-btn-gray" onclick="newTransaction()">
+      ➕ รายการใหม่
+    </button>
+  </div>
+</div>
+
+<!-- ════════ JAVASCRIPT ════════ -->
+<script>
+
+// ── PromptPay QR Generator ────────────────────────────────────────────
+function crc16(d){let c=0xFFFF;for(let i=0;i<d.length;i++){c^=d.charCodeAt(i)<<8;for(let j=0;j<8;j++)c=(c&0x8000)?(c<<1)^0x1021:c<<1;}return(c&0xFFFF).toString(16).toUpperCase().padStart(4,"0");}
+function tlv(t,v){return t+String(v.length).padStart(2,"0")+v;}
+function generateQR(id,amt){
+  let a=id.replace(/[-\s]/g,""),tag,val;
+  if(a.length===13&&/^\d+$/.test(a)){tag="02";val=a;}
+  else{if(a.startsWith("0"))a=a.slice(1);tag="01";val="0066"+a;}
+  const ma=tlv("00","A000000677010111")+tlv(tag,val);
+  let p=tlv("00","01")+tlv("01","12")+tlv("29",ma)+tlv("58","TH")+tlv("53","764")+(amt?tlv("54",parseFloat(amt).toFixed(2)):"");
+  p+="6304";return p+crc16(p);
+}
+
+// ── App State ─────────────────────────────────────────────────────────
+let PROMPTPAY_ID = "";
+let USER_NAME    = "";
+
+// ── Sales Log API Config ────────────────────────────────────────────
+// วาง URL ของ Apps Script Web App ที่ deploy ไว้ (ลงท้ายด้วย /exec)
+const SALES_LOG_API_URL = "https://script.google.com/macros/s/XXXXXXXXXXXX/exec";
+
+// ── Utilities ─────────────────────────────────────────────────────────
+function genGUID(){
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){
+    var r=Math.random()*16|0,v=c==="x"?r:(r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+function isoTimestamp(d){
+  const p=n=>String(n).padStart(2,"0");
+  const off=-(d.getTimezoneOffset());
+  const sign=off>=0?"+":"-";
+  const oh=p(Math.floor(Math.abs(off)/60)), om=p(Math.abs(off)%60);
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+
+    "T"+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+sign+oh+":"+om;
+}
+function fmtTime(d){
+  const locale = currentLang.code==="en" ? "en-US" : "th-TH";
+  return d.toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+function fmtDate(d){
+  const locale = currentLang.code==="en" ? "en-US" : "th-TH";
+  return d.toLocaleDateString(locale,{day:"numeric",month:"short",year:"numeric"});
+}
+function numToWords(n){
+  const locale = currentLang.code==="en" ? "en-US" : "th-TH";
+  const suffix = currentLang.code==="en" ? " Baht" : " บาท";
+  return parseFloat(n).toLocaleString(locale,{minimumFractionDigits:2,maximumFractionDigits:2})+suffix;
+}
+
+// ── Key Animations ─────────────────────────────────────────────────────
+function animKey(el,type){
+  const cls=type==="op"?"key-op-anim":type==="eq"?"key-eq-anim":"key-press-anim";
+  el.classList.remove("key-press-anim","key-op-anim","key-eq-anim");
+  void el.offsetWidth;
+  el.classList.add(cls);
+  el.addEventListener("animationend",()=>el.classList.remove(cls),{once:true});
+}
+
+// ── Calculator Logic ───────────────────────────────────────────────────
+let justEvaled=false;
+let pendingOp=null;
+let pendingVal=null;
+let runningSum=0;
+
+function updateDisplay(val,expr){
+  const el=document.getElementById("display");
+  const s=expr!==undefined?expr:String(val);
+  el.textContent=s;
+  el.className="display-amount"+(s.length>12?" xsmall":s.length>8?" small":"");
+}
+
+function updateRunningTotal(){
+  const rt=document.getElementById("running-total");
+  if(!rt)return;
+  if(runningSum===0&&pendingOp===null){rt.style.visibility="hidden";return;}
+  rt.style.visibility="visible";
+  const locale = currentLang.code==="en" ? "en-US" : "th-TH";
+  const sumFmt=n=>n.toLocaleString(locale,{minimumFractionDigits:2,maximumFractionDigits:2});
+  const cur=getDisplayRaw();
+  if(cur>0&&pendingOp!==null){
+    if(pendingOp==="×"){
+      const mul=Math.round((pendingVal*cur)*1e10)/1e10;
+      rt.textContent=t("total")+": "+sumFmt(runningSum)+" + "+sumFmt(pendingVal)+" × "+sumFmt(cur)+" = "+sumFmt(Math.round((runningSum+mul)*1e10)/1e10)+" ฿";
+      return;
+    }
+    let preview=0,opLabel="+";
+    if(pendingOp==="+"){preview=Math.round((runningSum+cur)*1e10)/1e10;opLabel="+";}
+    if(pendingOp==="−"){preview=Math.round((runningSum-cur)*1e10)/1e10;opLabel="−";}
+    rt.textContent=t("total")+": "+sumFmt(runningSum)+" "+opLabel+" "+sumFmt(cur)+" = "+sumFmt(preview)+" ฿";
+  }else{
+    rt.textContent=t("total")+": "+sumFmt(runningSum)+" ฿";
+  }
+}
+
+function getDisplayRaw(){
+  const txt=document.getElementById("display").textContent;
+  const parts=txt.split(/\s[X×−+]\s/);
+  return parseFloat(parts[parts.length-1])||0;
+}
+
+function keyNum(n){
+  if(justEvaled){
+    if(pendingOp==="×"||pendingOp==="−"||pendingOp==="+"){
+      const opChar=pendingOp==="×"?"X":pendingOp==="−"?"−":"+";
+      const cur=document.getElementById("display").textContent;
+      if(!cur.includes(" "+opChar+" ")){
+        updateDisplay(null,(pendingVal!==null&&pendingVal!==0?pendingVal:cur.split(" ")[0])+" "+opChar+" "+n);
+      }else{
+        const base=cur.split(" "+opChar+" ")[0];
+        const after=cur.split(" "+opChar+" ")[1];
+        if(after==="0")updateDisplay(null,base+" "+opChar+" "+n);
+        else updateDisplay(null,base+" "+opChar+" "+after+n);
+      }
+      updateRunningTotal();return;
+    }
+    justEvaled=false;
+    updateDisplay("0");
+  }
+  let cur=document.getElementById("display").textContent;
+  if(cur==="0"&&n!==".")cur="";
+  if(cur.replace(/[^0-9]/g,"").length>=10)return;
+  updateDisplay(cur+n);
+  updateRunningTotal();
+}
+
+function keyDot(){
+  const cur=document.getElementById("display").textContent;
+  const parts=cur.split(/\s[X×−+]\s/);
+  const last=parts[parts.length-1];
+  if(last.includes("."))return;
+  if(justEvaled){justEvaled=false;}
+  updateDisplay(cur+".");
+}
+
+function keySpec(s){
+  if(s==="AC"){
+    let cur=document.getElementById("display").textContent;
+    if(cur.length<=1){updateDisplay("0");return;}
+    const trimmed=cur.slice(0,-1).trimEnd();
+    const clean=trimmed.replace(/\s[X×−+]$/,"").trim()||"0";
+    if(clean===pendingVal?.toString()||!trimmed.includes(" ")){
+      pendingOp=null;pendingVal=null;justEvaled=false;
+    }
+    updateDisplay(clean);
+  }
+  if(s==="CLEAR"){
+    pendingOp=null;pendingVal=null;runningSum=0;justEvaled=false;
+    updateDisplay("0");
+    updateRunningTotal();
+  }
+}
+
+function keyOp(op){
+  const cur=getDisplayRaw();
+  if(op==="×"){
+    pendingVal=cur;pendingOp="×";justEvaled=true;
+    updateDisplay(null,cur+" X ");updateRunningTotal();
+  }
+  if(op==="−"){
+    let result=cur;
+    if(pendingOp==="×"&&pendingVal!==null)result=Math.round(pendingVal*cur*1e10)/1e10;
+    pendingOp=null;pendingVal=null;
+    runningSum=Math.round((runningSum+result)*1e10)/1e10;
+    pendingVal=0;pendingOp="−";justEvaled=true;
+    updateDisplay(null,result+" − ");updateRunningTotal();
+  }
+  if(op==="+"){
+    let result=cur;
+    if(pendingOp==="×"&&pendingVal!==null)result=Math.round(pendingVal*cur*1e10)/1e10;
+    else if(pendingOp==="−"&&pendingVal!==null)result=Math.round((pendingVal-cur)*1e10)/1e10;
+    pendingOp=null;pendingVal=null;
+    runningSum=Math.round((runningSum+result)*1e10)/1e10;
+    pendingVal=0;pendingOp="+";justEvaled=true;
+    updateDisplay(null,result+" + ");updateRunningTotal();
+  }
+}
+
+function keyEqual(){
+  const cur=getDisplayRaw();
+  let result=cur;
+  if(pendingVal!==null){
+    if(pendingOp==="×")result=Math.round(pendingVal*cur*1e10)/1e10;
+    if(pendingOp==="−")result=Math.round((pendingVal-cur)*1e10)/1e10;
+    if(pendingOp==="+")result=cur;
+    pendingOp=null;pendingVal=null;
+  }
+  const total=Math.round((runningSum+result)*1e10)/1e10;
+  runningSum=0;
+  updateDisplay(total.toString());
+  justEvaled=true;
+  updateRunningTotal();
+}
+
+function keyQR(){
+  if(pendingOp!==null){
+    const el=document.getElementById("display");
+    el.style.transition="transform .05s";
+    const shake=[6,-6,5,-5,3,-3,0];
+    let i=0;
+    const s=setInterval(()=>{
+      el.style.transform=`translateX(${shake[i]}px)`;
+      i++;if(i>=shake.length){clearInterval(s);el.style.transform="";}
+    },50);
+    return;
+  }
+  if(!justEvaled)keyEqual();
+  const amt=getDisplayRaw();
+  if(!amt||amt<=0)return;
+  openQR(amt);
+}
+
+document.addEventListener("keydown",function(e){
+  if(document.getElementById("scr-calc").classList.contains("hidden"))return;
+  if(e.key>="0"&&e.key<="9"){keyNum(e.key);return;}
+  if(e.key==="."||e.key===","){keyDot();return;}
+  if(e.key==="Backspace"||e.key==="Delete"||e.key==="Escape"){keySpec("AC");return;}
+  if(e.key==="Enter"||e.key==="="){keyEqual();return;}
+  if(e.key==="+"||e.key==="Add"){keyOp("+");return;}
+  if(e.key==="*"){keyOp("×");return;}
+  if(e.key==="-"||e.key==="Subtract"){keyOp("−");return;}
+});
+
+// ── Info Card ──────────────────────────────────────────────────────────
+let infoCardOpen=true;
+function toggleInfoCard(){
+  infoCardOpen=!infoCardOpen;
+  const body=document.getElementById("info-card-body");
+  const chevron=document.getElementById("info-chevron");
+  if(body)body.style.maxHeight=infoCardOpen?"200px":"0px";
+  if(chevron)chevron.style.transform=infoCardOpen?"":"rotate(-90deg)";
+}
+function resetInfoCard(){
+  infoCardOpen=true;
+  const body=document.getElementById("info-card-body");
+  const chevron=document.getElementById("info-chevron");
+  if(body)body.style.maxHeight="200px";
+  if(chevron)chevron.style.transform="";
+}
+
+// ── Transaction State ──────────────────────────────────────────────────
+let currentTx=null;
+
+function openQR(amt){
+  const now=new Date();
+  const ref=genGUID();
+  currentTx={
+    amount:    amt,
+    guid:      ref,
+    ref:       ref,
+    timestamp: isoTimestamp(now),
+    date:      now,
+    name:      USER_NAME||""
+  };
+  const formatted=amt%1===0?String(Math.round(amt)):amt.toFixed(2);
+  document.getElementById("qr-amount").textContent=formatted;
+  const wordsEl=document.getElementById("qr-amount-words");
+  wordsEl.textContent=numToWords(amt);
+  wordsEl.style.display="block";
+  document.getElementById("qr-ref").textContent=ref;
+  document.getElementById("qr-time").textContent=fmtTime(now);
+  document.getElementById("qr-account").textContent=PROMPTPAY_ID;
+  const nameVal=USER_NAME||"";
+  const ppLabel=document.getElementById("qr-label-pp");
+  if(ppLabel){ppLabel.textContent=t("accountNameLabel")+": "+(nameVal.trim()||"PromptPay");ppLabel.style.display="block";}
+  const qrTitleEl=document.getElementById("qr-title");
+  if(qrTitleEl)qrTitleEl.textContent=nameVal.trim()||t("qrTitle");
+  const c=document.getElementById("qr-container");
+  c.innerHTML="";
+  const sz=Math.min(240,window.innerWidth-64-20-20);
+  new QRCode(c,{
+    text:generateQR(PROMPTPAY_ID,amt),
+    width:sz,height:sz,
+    colorDark:"#000000",colorLight:"#ffffff",
+    correctLevel:QRCode.CorrectLevel.M
+  });
+  c.style.cssText=`line-height:0;width:${sz}px;height:${sz}px;display:block;`;
+  goScreen("qr");
+  resetInfoCard();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// buildSlip80() — สร้างเนื้อหา e-slip ขนาด 80mm สำหรับบันทึกเป็นภาพ
+// ════════════════════════════════════════════════════════════════════════
+function buildSlip80(tx){
+  const amt=Number.isInteger(tx.amount)?tx.amount.toFixed(0):tx.amount.toFixed(2);
+  const masked=PROMPTPAY_ID
+    ? (PROMPTPAY_ID.length===10
+        ? PROMPTPAY_ID.replace(/(\d{3})(\d{3})(\d{4})/,"$1-$2-$3")
+        : PROMPTPAY_ID.replace(/(\d{1})(\d{4})(\d{4})(\d{3})(\d{1})/,"X-$2-$3$4-$5"))
+    : "";
+  const name=(USER_NAME||"").trim();
+  return `
+    <div style="padding:6mm 4mm;text-align:center;font-family:'Inter',-apple-system,sans-serif;color:#000;">
+      <div style="font-size:14px;font-weight:700;margin-bottom:1mm;">${name||"ScanPay"}</div>
+      ${masked?`<div style="font-size:10px;color:#333;margin-bottom:2mm;">${t("promptpayLabel")}: ${masked}</div>`:""}
+      <div style="border-top:1px dashed #000;margin:2mm 0;"></div>
+      <div style="font-size:11px;color:#333;">${t("success")}</div>
+      <div style="font-size:11px;color:#333;margin-bottom:2mm;">${fmtDate(tx.date)} ${fmtTime(tx.date)}</div>
+      <div style="border-top:1px dashed #000;margin:2mm 0;"></div>
+      <div style="font-size:11px;color:#333;margin-bottom:1mm;">${t("amountReceived")}</div>
+      <div style="font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:1mm;">฿${amt}</div>
+      <div style="font-size:10px;color:#333;margin-bottom:2mm;">${numToWords(tx.amount)}</div>
+      <div style="border-top:1px dashed #000;margin:2mm 0;"></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#333;margin-bottom:1mm;">
+        <span>${t("channel")}</span><span>${t("promptpayLabel")}</span>
+      </div>
+      <div style="font-size:9px;color:#333;word-break:break-all;margin-bottom:2mm;">
+        ${t("reference")}: ${tx.ref}
+      </div>
+      <div style="border-top:1px dashed #000;margin:2mm 0;"></div>
+      <div style="font-size:9px;color:#666;margin-top:2mm;">ScanPay</div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// saveSlipImage() — สร้างภาพ e-slip และบันทึกลงเครื่องอัตโนมัติ
+// ════════════════════════════════════════════════════════════════════════
+function saveSlipImage(tx){
+  if(!tx)return;
+  const w=document.createElement("div");
+  // วางไว้นอกจอแต่ต้อง render จริง (ไม่ใช้ display:none) เพื่อให้ html2canvas capture ได้
+  w.style.cssText="position:absolute;top:0;left:-9999px;width:80mm;background:#fff;";
+  w.innerHTML=buildSlip80(tx);
+  document.body.appendChild(w);
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    html2canvas(w,{scale:3,useCORS:true,backgroundColor:"#fff",logging:false})
+      .then(canvas=>{
+        document.body.removeChild(w);
+        const a=document.createElement("a");
+        const dateStr=tx.date.getFullYear()+
+          String(tx.date.getMonth()+1).padStart(2,"0")+
+          String(tx.date.getDate()).padStart(2,"0")+"-"+
+          String(tx.date.getHours()).padStart(2,"0")+
+          String(tx.date.getMinutes()).padStart(2,"0")+
+          String(tx.date.getSeconds()).padStart(2,"0");
+        a.download="eslip-"+dateStr+"-"+(tx.ref||tx.guid||"").slice(0,8)+".png";
+        a.href=canvas.toDataURL("image/png");
+        a.click();
+      })
+      .catch(err=>{
+        if(w.parentNode)document.body.removeChild(w);
+        console.warn("[saveSlipImage] failed →",err);
+      });
+  }));
+}
+
+
+// ════════════════════════════════════════════════════════════════════════
+// Sales Log Sync — บันทึกประวัติการขายลง Google Sheet พร้อม fallback offline
+// ════════════════════════════════════════════════════════════════════════
+const SALES_LOG_QUEUE_KEY = "pending_sales_logs";
+
+function buildSalesLogPayload(tx){
+  return {
+    timestamp: tx.timestamp || isoTimestamp(tx.date),
+    date:      fmtDate(tx.date),
+    time:      fmtTime(tx.date),
+    amount:    tx.amount,
+    promptpay: PROMPTPAY_ID,
+    name:      USER_NAME || "",
+    ref:       tx.ref || tx.guid || ""
+  };
+}
+
+function getSalesLogQueue(){
+  try{
+    const raw=localStorage.getItem(SALES_LOG_QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(ex){ return []; }
+}
+
+function setSalesLogQueue(queue){
+  try{ localStorage.setItem(SALES_LOG_QUEUE_KEY, JSON.stringify(queue)); }catch(ex){}
+}
+
+// เพิ่มรายการเข้าคิว แล้วพยายามส่งทันที (ถ้าส่งสำเร็จจะลบออกจากคิว)
+function enqueueSalesLog(tx){
+  const payload=buildSalesLogPayload(tx);
+  const queue=getSalesLogQueue();
+  queue.push(payload);
+  setSalesLogQueue(queue);
+  syncSalesLogQueue();
+}
+
+// ส่งรายการในคิวทั้งหมดไปยัง Apps Script ทีละรายการ
+// รายการที่ส่งสำเร็จจะถูกลบออกจากคิว ที่ส่งไม่สำเร็จจะค้างไว้รอบถัดไป
+let salesLogSyncing=false;
+function syncSalesLogQueue(){
+  if(salesLogSyncing)return;
+  if(!SALES_LOG_API_URL || SALES_LOG_API_URL.indexOf("XXXXXXXXXXXX")!==-1)return;
+  const queue=getSalesLogQueue();
+  if(queue.length===0)return;
+
+  salesLogSyncing=true;
+
+  (async ()=>{
+    const remaining=[];
+    for(const item of queue){
+      try{
+        const res=await fetch(SALES_LOG_API_URL,{
+          method:"POST",
+          headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body: JSON.stringify({ action:"saveSalesLog", data:item })
+        });
+        const json=await res.json();
+        if(!json || json.ok!==true){
+          remaining.push(item);
+        }
+        // json.ok===true (รวมถึง duplicate:true) ถือว่าสำเร็จ -> ไม่ใส่กลับคิว
+      }catch(err){
+        // ไม่มีอินเทอร์เน็ต / ส่งไม่สำเร็จ -> เก็บไว้ส่งรอบถัดไป
+        remaining.push(item);
+      }
+    }
+    setSalesLogQueue(remaining);
+    salesLogSyncing=false;
+  })();
+}
+
+// พยายาม sync อัตโนมัติ: ตอนเปิดแอป, ตอนกลับมาออนไลน์, และทุก 60 วินาที
+window.addEventListener("online", syncSalesLogQueue);
+setInterval(syncSalesLogQueue, 60000);
+
+
+// ════════════════════════════════════════════════════════════════════════
+// confirmPaid() — ยืนยันรับเงิน (บันทึกลง Google Sheet + e-slip)
+// ════════════════════════════════════════════════════════════════════════
+function confirmPaid(){
+  if(!currentTx)return;
+
+  // ── อัปเดต Success Screen ────────────────────────────────────────
+  const amt=currentTx.amount;
+  const fmtAmt=amt%1===0?String(Math.round(amt)):amt.toFixed(2);
+  const sAmt=document.getElementById("s-amount"); if(sAmt)sAmt.textContent=fmtAmt;
+  const sDate=document.getElementById("s-date");  if(sDate)sDate.textContent=fmtDate(currentTx.date);
+  const sTime=document.getElementById("s-time");  if(sTime)sTime.textContent=fmtTime(currentTx.date);
+  const sRef=document.getElementById("s-ref");    if(sRef)sRef.textContent=currentTx.ref||currentTx.guid||"—";
+
+  // ── บันทึกประวัติการขายลง Google Sheet (พร้อม fallback ออฟไลน์) ────
+  enqueueSalesLog(currentTx);
+
+  // ── บันทึก e-slip ลงเครื่องอัตโนมัติ ──────────────────────────────
+  saveSlipImage(currentTx);
+
+  // ── แสดง Checkmark Overlay ──────────────────────────────────────
+  ["scr-calc","scr-qr","scr-success","scr-signout","scr-howto"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.classList.add("hidden");el.classList.remove("fade-in");}
+  });
+
+  const isLight=document.body.classList.contains("theme-light");
+  const overlayBg=isLight?"#F3F3F3":"#000";
+  const circleBg=isLight?"#1A6B2A":"#fff";
+  const checkColor=isLight?"#fff":"#000";
+
+  const overlay=document.createElement("div");
+  overlay.id="thankyou-overlay";
+  overlay.style.cssText=`position:fixed;inset:0;z-index:9999;background:${overlayBg};overflow:hidden;`;
+  overlay.innerHTML=`
+  <style>
+    @keyframes checkIn{0%{opacity:0;transform:scale(.5)}60%{transform:scale(1.15)}80%{transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
+    @keyframes fadeOut{from{opacity:1}to{opacity:0}}
+  </style>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+    <div style="width:96px;height:96px;border-radius:50%;background:${circleBg};display:flex;align-items:center;justify-content:center;animation:checkIn .5s cubic-bezier(.34,1.56,.64,1) .1s both;">
+      <svg width="52" height="40" viewBox="0 0 52 40" fill="none">
+        <path d="M4 20 L18 34 L48 4" stroke="${checkColor}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  setTimeout(()=>{
+    overlay.style.animation="fadeOut .8s ease forwards";
+    setTimeout(()=>{
+      if(overlay.parentNode)overlay.parentNode.removeChild(overlay);
+      const hb=document.getElementById("hamburger-btn");
+      if(hb)hb.style.display="flex";
+      newTransaction();
+    },820);
+  },3000);
+}
+
+// ── Receipt Builder & Save ─────────────────────────────────────────────
+function buildReceipt(tx){
+  const amt=Number.isInteger(tx.amount)?tx.amount.toFixed(0):tx.amount.toFixed(2);
+  const masked=PROMPTPAY_ID.replace(/(\d{1})(\d{4})(\d{4})(\d{3})(\d{1})/,"X-$2-$3$4-$5");
+  return `<div style="width:390px;background:#fff;font-family:-apple-system,sans-serif;color:#1C1C1E;">
+    <div style="background:#1A7A35;padding:28px 24px 22px;">
+      <div style="font-size:26px;font-weight:700;color:#fff;margin-bottom:4px;">${t("success")}</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.85);">${fmtDate(tx.date)} ${fmtTime(tx.date)}</div>
+    </div>
+    <div style="height:3px;background:linear-gradient(90deg,#1A7A35,#22A048);"></div>
+    <div style="padding:24px 24px 0;">
+      <div style="font-size:13px;color:#8E8E93;margin-bottom:6px;">${t("amountReceived")}</div>
+      <div style="font-size:48px;font-weight:300;letter-spacing:-2px;margin-bottom:4px;">฿${amt}</div>
+      <div style="font-size:13px;color:#8E8E93;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #F2F2F7;">${numToWords(tx.amount)}</div>
+      <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F2F2F7;"><span style="color:#6C6C70;">${t("channel")}</span><b>${t("promptpayLabel")}</b></div>
+      <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F2F2F7;"><span style="color:#6C6C70;">${t("fee")}</span><span>0.00 THB</span></div>
+      <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F2F2F7;"><span style="color:#6C6C70;">${t("reference")}</span><b style="font-family:monospace;font-size:13px;">${tx.ref}</b></div>
+      <div style="padding:12px 0;color:#6C6C70;font-size:13px;">${masked}</div>
+    </div>
+    <div style="padding:14px 24px;display:flex;justify-content:space-between;font-size:11px;color:#C7C7CC;">
+      <span>${t("noQrReceipt")}</span><span>ScanPay</span>
+    </div>
+  </div>`;
+}
+
+function captureAndSave(){
+  if(!currentTx)return;
+  const btn=document.getElementById("save-btn");
+  btn.textContent=t("saving");btn.style.opacity=".6";btn.disabled=true;
+  const w=document.createElement("div");
+  w.style.cssText="position:absolute;top:0;left:0;z-index:-999;width:390px;";
+  w.innerHTML=buildReceipt(currentTx);
+  document.body.appendChild(w);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    html2canvas(w.firstElementChild,{scale:3,useCORS:true,backgroundColor:"#fff",logging:false,width:390})
+      .then(c=>{
+        document.body.removeChild(w);
+        btn.textContent="💾 "+t("saveReceipt");btn.style.opacity="1";btn.disabled=false;
+        const a=document.createElement("a");
+        a.download="receipt-"+currentTx.ref+".png";
+        a.href=c.toDataURL("image/png");a.click();
+      }).catch(()=>{
+        document.body.removeChild(w);
+        btn.textContent="💾 "+t("saveReceipt");btn.style.opacity="1";btn.disabled=false;
+      });
+  }));
+}
+
+// ── Screen Navigation ─────────────────────────────────────────────────
+function goScreen(name){
+  ["scr-calc","scr-qr","scr-success","scr-signout","scr-howto"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.classList.add("hidden");el.classList.remove("fade-in");el.style.display="";}
+  });
+  const el=document.getElementById("scr-"+name);
+  if(!el)return;
+  el.classList.remove("hidden");
+  if(name==="howto")el.style.display="flex";
+  void el.offsetWidth;
+  el.classList.add("fade-in");
+  el.scrollTop=0;
+}
+
+function newTransaction(){
+  currentTx=null;
+  justEvaled=false;
+  pendingOp=null;pendingVal=null;runningSum=0;
+  updateDisplay("0");
+  updateRunningTotal();
+  goScreen("calc");
+}
+
+function showSignInScreen(){
+  setTheme("light");
+  ["scr-calc","scr-qr","scr-success","scr-signout","scr-howto"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.animation="none";el.classList.add("hidden");el.classList.remove("fade-in");}
+  });
+  const so=document.getElementById("scr-signout");
+  so.style.animation="";so.classList.remove("hidden");
+  void so.offsetWidth;so.classList.add("fade-in");
+  const hb=document.getElementById("hamburger-btn");
+  if(hb)hb.style.display="none";
+}
+
+function signOut(e){
+  if(e)e.stopPropagation();
+  document.getElementById("acct-popup").classList.remove("open");
+  PROMPTPAY_ID="";USER_NAME="";
+  try{localStorage.removeItem("promptpay_id");localStorage.removeItem("user_name");}catch(err){}
+  const inp=document.getElementById("input-promptpay");if(inp)inp.value="";
+  const nameInp=document.getElementById("input-name");if(nameInp)nameInp.value="";
+  const errEl=document.getElementById("input-error");if(errEl)errEl.textContent="";
+  showSignInScreen();
+}
+
+function signIn(){
+  const input=document.getElementById("input-promptpay");
+  const errEl=document.getElementById("input-error");
+  const val=(input?input.value:"").replace(/[-\s]/g,"").trim();
+  if(!/^\d{10}$/.test(val)&&!/^\d{13}$/.test(val)){
+    if(errEl)errEl.textContent=t("errPhone");
+    if(input)input.focus();return;
+  }
+  if(errEl)errEl.textContent="";
+  const nameInput=document.getElementById("input-name");
+  const nameVal2=nameInput?nameInput.value.trim():"";
+  if(!nameVal2){
+    if(errEl)errEl.textContent=t("errName");
+    if(nameInput)nameInput.focus();return;
+  }
+  USER_NAME=nameVal2;
+  try{localStorage.setItem("user_name",nameVal2);}catch(e){}
+  PROMPTPAY_ID=val;
+  try{localStorage.setItem("promptpay_id",val);}catch(e){}
+  const hb=document.getElementById("hamburger-btn");
+  if(hb)hb.style.display="flex";
+  newTransaction();
+}
+
+// ── Translations ──────────────────────────────────────────────────────
+const TRANSLATIONS={
+  th:{
+    appName:"เครื่องคิดเงิน",
+    promptpay:"หมายเลขบัญชีพร้อมเพย์",
+    signOut:"ออกจากระบบ",
+    displayLang:"ภาษาที่แสดง",
+    cancel:"ยกเลิก",
+    confirm:"ตกลง",
+    createQR:"สร้าง QR ชำระเงิน",
+    total:"ยอดสะสม",
+    del:"ลบ",
+    qrTitle:"Thai QR Payment",
+    back:"กลับ",
+    accountNameLabel:"ชื่อบัญชี",
+    fullName:"ชื่อ-นามสกุล",
+    getStarted:"เริ่มใช้งาน",
+    calculator:"เครื่องคิดเงิน",
+    acceptAllBank:"Accept all bank | รับเงินได้ทุกธนาคาร",
+    settings:"การตั้งค่า",
+    themeApp:"ธีมแอป",
+    lightMode:"โหมดสว่าง",
+    darkMode:"โหมดมืด",
+    about:"เกี่ยวกับ",
+    signinTitle:"เครื่องคิดเงิน QR พร้อมเพย์",
+    signinSubtitle:"กรอกข้อมูลพร้อมเพย์เพื่อเริ่มใช้งาน",
+    promptpayNumber:"หมายเลขพร้อมเพย์",
+    promptpayPlaceholder:"เบอร์โทรศัพท์ หรือเลขบัตร 13 หลัก",
+    accountName:"ชื่อบัญชี",
+    howto:"วิธีการใช้งาน",
+    localOnly:"ข้อมูลของคุณถูกเก็บไว้บนอุปกรณ์นี้เท่านั้น",
+    errPhone:"กรุณากรอกเบอร์โทรศัพท์ หรือเลขบัตร 13 หลักให้ถูกต้อง",
+    errName:"กรุณากรอกชื่อ-นามสกุล",
+    details:"รายละเอียด",
+    confirmReceived:"ยืนยันรับเงินสำเร็จ",
+    transactionSuccess:"รายการสำเร็จ",
+    success:"รับเงินสำเร็จ",
+    paymentReceived:"Payment Received",
+    amountReceived:"ยอดที่ได้รับ",
+    datetime:"วันที่ / เวลา",
+    channel:"ช่องทาง",
+    promptpayLabel:"พร้อมเพย์",
+    fee:"ค่าธรรมเนียม",
+    reference:"อ้างอิง",
+    saveReceipt:"บันทึกใบเสร็จ",
+    newTransaction:"รายการใหม่",
+    saving:"กำลังบันทึก...",
+    noQrReceipt:"ใบเสร็จนี้ไม่มี QR ชำระเงิน",
+    howtoTitle:"วิธีการใช้งาน",
+    howtoSubtitle:"เครื่องคิดเงิน QR พร้อมเพย์",
+    howtoStep1Title:"ใส่เลขพร้อมเพย์",
+    howtoStep1Desc:"กรอกเบอร์โทร 10 หลัก หรือเลขบัตร 13 หลัก",
+    howtoStep2Title:"คิดราคาสินค้า",
+    howtoStep2Desc:"ใช้เครื่องคิดเลข บวก ลบ คูณ",
+    howtoStep3Title:"สร้าง QR ชำระเงิน",
+    howtoStep3Desc:"กด \"สร้าง QR\" ระบบสร้าง QR มาตรฐาน EMVCo",
+    howtoStep4Title:"ลูกค้าสแกนจ่าย",
+    howtoStep4Desc:"ลูกค้าสแกน QR ผ่านแอปธนาคารใดก็ได้",
+    howtoStep5Title:"ยืนยันรับเงินสำเร็จ",
+    howtoStep5Desc:"กด \"ยืนยันรับเงินสำเร็จ\" เพื่อบันทึกรายการ",
+    howtoFooter:"PromptPay · EMVCo · ทุกธนาคารในไทย"
+  },
+  en:{
+    appName:"Calculator",
+    promptpay:"PromptPay Account Number",
+    signOut:"Sign Out",
+    displayLang:"Display language",
+    cancel:"Cancel",
+    confirm:"OK",
+    createQR:"Create QR Payment",
+    total:"Total",
+    del:"Clear",
+    qrTitle:"Thai QR Payment",
+    back:"Back",
+    accountNameLabel:"Account Name",
+    fullName:"Full name",
+    getStarted:"Get Started",
+    calculator:"Calculator",
+    acceptAllBank:"Accept all banks",
+    settings:"Settings",
+    themeApp:"App Theme",
+    lightMode:"Light Mode",
+    darkMode:"Dark Mode",
+    about:"About",
+    signinTitle:"PromptPay QR Calculator",
+    signinSubtitle:"Enter your PromptPay details to get started",
+    promptpayNumber:"PromptPay Number",
+    promptpayPlaceholder:"Phone number or 13-digit Tax ID",
+    accountName:"Account Name",
+    howto:"How to use",
+    localOnly:"Your data is stored on this device only",
+    errPhone:"Please enter a valid phone number or 13-digit Tax ID",
+    errName:"Please enter your full name",
+    details:"Details",
+    confirmReceived:"Confirm Payment Received",
+    transactionSuccess:"Transaction Success",
+    success:"Payment Received",
+    paymentReceived:"Payment Received",
+    amountReceived:"Amount Received",
+    datetime:"Date / Time",
+    channel:"Channel",
+    promptpayLabel:"PromptPay",
+    fee:"Fee",
+    reference:"Reference",
+    saveReceipt:"Save Receipt",
+    newTransaction:"New Transaction",
+    saving:"Saving...",
+    noQrReceipt:"This receipt does not include a payment QR",
+    howtoTitle:"How to use",
+    howtoSubtitle:"PromptPay QR Calculator",
+    howtoStep1Title:"Enter PromptPay number",
+    howtoStep1Desc:"Enter a 10-digit phone number or 13-digit Tax ID",
+    howtoStep2Title:"Calculate the price",
+    howtoStep2Desc:"Use the calculator with +, −, ×",
+    howtoStep3Title:"Create payment QR",
+    howtoStep3Desc:"Tap \"Create QR\" to generate an EMVCo-standard QR code",
+    howtoStep4Title:"Customer scans to pay",
+    howtoStep4Desc:"Customer scans the QR with any banking app",
+    howtoStep5Title:"Confirm payment received",
+    howtoStep5Desc:"Tap \"Confirm Payment Received\" to save the transaction",
+    howtoFooter:"PromptPay · EMVCo · All Thai banks"
+  }
+};
+
+const SEA_LANGS=[{name:"ไทย",code:"th"},{name:"English",code:"en"}];
+let currentLang=SEA_LANGS[0];
+let langExpanded=false;
+
+function t(key){return(TRANSLATIONS[currentLang.code]||TRANSLATIONS.th)[key]||key;}
+
+function applyTranslations(){
+  const s=id=>document.getElementById(id);
+  const q=sel=>document.querySelector(sel);
+
+  // Calculator screen
+  const lbl=s("calc-label");if(lbl)lbl.textContent=t("appName");
+  const qrBtn=s("btn-createqr");if(qrBtn)qrBtn.textContent=t("createQR");
+
+  // QR screen
+  const qrBack=s("qr-back-txt");if(qrBack)qrBack.textContent=t("back");
+  const qrDetails=s("qr-details-label");if(qrDetails)qrDetails.textContent=t("details");
+  const qrAccept=s("qr-accept-banks");if(qrAccept)qrAccept.textContent=t("acceptAllBank");
+  const cancelBtn=s("btn-qr-cancel");if(cancelBtn)cancelBtn.textContent=t("cancel");
+  const confirmBtn=s("btn-qr-confirm");if(confirmBtn)confirmBtn.textContent=t("confirmReceived");
+  const qrTitleEl=s("qr-title");
+  if(qrTitleEl && (!currentTx || !(USER_NAME||"").trim())){
+    qrTitleEl.textContent=t("qrTitle");
+  }
+  const ppLabel=s("qr-label-pp");
+  if(ppLabel && ppLabel.style.display==="block"){
+    const nameVal=USER_NAME||"";
+    ppLabel.textContent=t("accountNameLabel")+": "+(nameVal.trim()||"PromptPay");
+  }
+
+  // Popup / settings
+  const soSpan=s("signout-label");if(soSpan)soSpan.textContent=t("signOut");
+  const setLbl=s("settings-label");if(setLbl)setLbl.textContent=t("settings");
+  const langRowLbl=s("lang-row-label");
+  if(langRowLbl){
+    langRowLbl.innerHTML=t("displayLang")+': <span id="lang-current-name">'+currentLang.name+'</span>';
+  }
+  const langName=s("lang-current-name");if(langName)langName.textContent=currentLang.name;
+  const themeSectionLbl=s("theme-section-label");if(themeSectionLbl)themeSectionLbl.textContent=t("themeApp");
+  const themeModeLbl=s("theme-mode-label");
+  if(themeModeLbl){
+    const isLight=document.body.classList.contains("theme-light");
+    themeModeLbl.textContent=isLight?t("lightMode"):t("darkMode");
+  }
+  const aboutLbl=s("about-section-label");if(aboutLbl)aboutLbl.textContent=t("about");
+
+  // Sign-in screen
+  const siTitle=s("signout-title");if(siTitle)siTitle.textContent=t("signinTitle");
+  const siSub=s("signout-subtitle");if(siSub)siSub.textContent=t("signinSubtitle");
+  const lblPP=s("label-promptpay");if(lblPP)lblPP.textContent=t("promptpayNumber");
+  const lblAcct=s("label-accountname");if(lblAcct)lblAcct.textContent=t("accountName");
+  const inpPP=s("input-promptpay");if(inpPP)inpPP.placeholder=t("promptpayPlaceholder");
+  const inpName=s("input-name");if(inpName)inpName.placeholder=t("fullName");
+  const btnStart=s("btn-start");if(btnStart)btnStart.textContent=t("getStarted");
+  const btnHowto=s("btn-howto");if(btnHowto)btnHowto.textContent=t("howto");
+  const sfFooter=s("signout-footer");
+  if(sfFooter){
+    const span=sfFooter.querySelector("span");
+    if(span)span.textContent=t("localOnly");
+  }
+
+  // Success screen
+  const sTitleHeader=s("success-title-header");if(sTitleHeader)sTitleHeader.textContent=t("transactionSuccess");
+  const sTitle=s("success-title");if(sTitle)sTitle.textContent=t("success");
+  const sSubtitle=s("success-subtitle");if(sSubtitle)sSubtitle.textContent=t("paymentReceived");
+  const sAmtLbl=s("success-amount-label");if(sAmtLbl)sAmtLbl.textContent=t("amountReceived");
+  const sDtLbl=s("success-datetime-label");if(sDtLbl)sDtLbl.textContent=t("datetime");
+  const sChLbl=s("success-channel-label");if(sChLbl)sChLbl.textContent=t("channel");
+  const sChVal=s("success-channel-value");if(sChVal)sChVal.textContent=t("promptpayLabel");
+  const sRefLbl=s("success-ref-label");if(sRefLbl)sRefLbl.textContent=t("reference");
+  const saveBtn=s("save-btn");if(saveBtn && !saveBtn.disabled)saveBtn.textContent="💾 "+t("saveReceipt");
+  const newTxBtn=s("newtx-btn");if(newTxBtn)newTxBtn.textContent="➕ "+t("newTransaction");
+
+  // Howto overlay
+  const hTitle=s("howto-title");if(hTitle)hTitle.textContent=t("howtoTitle");
+  const hSub=s("howto-subtitle");if(hSub)hSub.textContent=t("howtoSubtitle");
+  for(let i=1;i<=5;i++){
+    const ttl=s("howto-step"+i+"-title");if(ttl)ttl.textContent=t("howtoStep"+i+"Title");
+    const desc=s("howto-step"+i+"-desc");if(desc)desc.textContent=t("howtoStep"+i+"Desc");
+  }
+  const hClose=s("btn-howto-close");if(hClose)hClose.textContent=t("getStarted");
+  const hFooter=s("howto-footer");if(hFooter)hFooter.textContent=t("howtoFooter");
+
+  updateRunningTotal();
+}
+
+// ── Language ──────────────────────────────────────────────────────────
+function toggleLangExpand(e){
+  if(e)e.stopPropagation();
+  langExpanded=!langExpanded;
+  const list=document.getElementById("lang-list");
+  const chevron=document.getElementById("lang-chevron");
+  if(list)list.style.display=langExpanded?"block":"none";
+  if(chevron)chevron.style.transform=langExpanded?"rotate(90deg)":"";
+  if(langExpanded)renderLangList();
+}
+
+function renderLangList(){
+  const el=document.getElementById("lang-list");if(!el)return;
+  el.innerHTML=`<div style="background:rgba(255,255,255,.04);border-radius:8px;overflow:hidden;">`+
+    SEA_LANGS.map((l,i)=>`
+    <button onclick="setLang('${l.code}',event)" style="
+      width:100%;background:transparent;border:none;
+      border-bottom:${i<SEA_LANGS.length-1?"1px solid rgba(255,255,255,.06)":"none"};
+      padding:10px 16px;display:flex;align-items:center;gap:14px;
+      cursor:pointer;font-family:inherit;text-align:left;
+    " onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='transparent'">
+      ${l.code===currentLang.code?'<svg fill="#fff" width="16" height="16" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>':'<span style="width:16px;display:inline-block;"></span>'}
+      <span style="font-size:14px;color:rgba(255,255,255,${l.code===currentLang.code?".87":".6"});font-weight:${l.code===currentLang.code?"500":"400"};">${l.name}</span>
+    </button>`).join("")+`</div>`;
+}
+
+function setLang(code,e){
+  if(e)e.stopPropagation();
+  currentLang=SEA_LANGS.find(l=>l.code===code)||SEA_LANGS[0];
+  try{localStorage.setItem("app_lang",code);}catch(ex){}
+  langExpanded=false;
+  applyTranslations();
+  const popup=document.getElementById("acct-popup");
+  if(popup)popup.classList.remove("open");
+  const list=document.getElementById("lang-list");
+  const chevron=document.getElementById("lang-chevron");
+  if(list)list.style.display="none";
+  if(chevron)chevron.style.transform="";
+}
+
+function loadLang(){
+  try{
+    const saved=localStorage.getItem("app_lang");
+    if(saved){
+      const found=SEA_LANGS.find(l=>l.code===saved);
+      if(found)currentLang=found;
+    }
+  }catch(ex){}
+}
+
+// ── Popup ─────────────────────────────────────────────────────────────
+function toggleAcctPopup(e){
+  if(e)e.stopPropagation();
+  const p=document.getElementById("acct-popup");
+  const isOpen=p.classList.contains("open");
+  p.classList.toggle("open");
+  if(!isOpen){
+    const el=document.getElementById("popup-promptpay");if(el)el.textContent=PROMPTPAY_ID;
+    const nameEl=document.getElementById("popup-name");if(nameEl)nameEl.textContent=USER_NAME||"PromptPay Account";
+    renderLangList();applyTranslations();
+  }
+}
+document.addEventListener("click",function(e){
+  const popup=document.getElementById("acct-popup");
+  const burger=document.getElementById("hamburger-btn");
+  if(!popup||!popup.classList.contains("open"))return;
+  if(!popup.contains(e.target)&&e.target!==burger&&!burger.contains(e.target))popup.classList.remove("open");
+});
+
+// ── Verified Tip ──────────────────────────────────────────────────────
+function toggleVerifiedTip(e){
+  e.stopPropagation();
+  const tip=document.getElementById("verified-tip");if(!tip)return;
+  const isOpen=tip.style.display==="block";
+  if(!isOpen){
+    const num=PROMPTPAY_ID||"—";
+    let fmt=num;
+    if(num.length===10)fmt=num.replace(/(\d{3})(\d{3})(\d{4})/,"$1-$2-$3");
+    else if(num.length===13)fmt=num.replace(/(\d{1})(\d{4})(\d{5})(\d{2})(\d{1})/,"$1-$2-$3-$4-$5");
+    tip.textContent=fmt;
+    const arrow=document.createElement("div");
+    arrow.style.cssText="position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom-color:#fff;";
+    tip.appendChild(arrow);
+  }
+  tip.style.display=isOpen?"none":"block";
+}
+document.addEventListener("click",function(){
+  const tip=document.getElementById("verified-tip");if(tip)tip.style.display="none";
+});
+
+// ── Settings / Theme ──────────────────────────────────────────────────
+let settingsExpanded=false;
+function toggleSettings(e){
+  if(e)e.stopPropagation();
+  settingsExpanded=!settingsExpanded;
+  const panel=document.getElementById("settings-panel");
+  const chevron=document.getElementById("settings-chevron");
+  if(panel)panel.style.display=settingsExpanded?"block":"none";
+  if(chevron)chevron.style.transform=settingsExpanded?"rotate(90deg)":"";
+}
+
+function setTheme(val){
+  const body=document.body;
+  body.classList.remove("theme-light","theme-dark");
+  if(val==="light")body.classList.add("theme-light");
+  if(val==="system"){const prefersDark=window.matchMedia("(prefers-color-scheme:dark)").matches;if(!prefersDark)body.classList.add("theme-light");}
+  try{localStorage.setItem("app_theme",val);}catch(e){}
+  const isLight=body.classList.contains("theme-light");
+  const tog=document.getElementById("theme-toggle");
+  const knob=document.getElementById("theme-knob");
+  const icon=document.getElementById("theme-icon");
+  if(tog)tog.style.background=isLight?"#0A84FF":"#3A3A3C";
+  if(knob)knob.style.left=isLight?"21px":"3px";
+  if(icon){
+    if(isLight){
+      icon.setAttribute("fill","#FF9F0A");
+      icon.innerHTML='<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-12.37l-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0zM7.05 18.36l-1.06 1.06a.996.996 0 0 0 0 1.41c.39.39 1.03.39 1.41 0l1.06-1.06a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0z"/>';
+      icon.style.filter="drop-shadow(0 0 4px rgba(255,159,10,.8))";
+    }else{
+      icon.setAttribute("fill","#FFD60A");
+      icon.innerHTML='<path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>';
+      icon.style.filter="drop-shadow(0 0 5px rgba(255,214,10,.9)) drop-shadow(0 0 10px rgba(255,214,10,.5))";
+    }
+  }
+  const pName=document.getElementById("popup-name");
+  const pPP=document.getElementById("popup-promptpay");
+  if(pName)pName.style.color=isLight?"#1A1A1A":"rgba(255,255,255,.87)";
+  if(pPP)pPP.style.color=isLight?"#767676":"rgba(255,255,255,.5)";
+  document.querySelectorAll("#hamburger-btn span").forEach(s=>{
+    s.style.background=isLight?"rgba(0,0,0,.65)":"rgba(255,255,255,.55)";
+  });
+  // Update theme mode label if visible
+  const themeModeLbl=document.getElementById("theme-mode-label");
+  if(themeModeLbl)themeModeLbl.textContent=isLight?t("lightMode"):t("darkMode");
+}
+
+function toggleThemeSwitch(e){
+  if(e)e.stopPropagation();
+  const isLight=document.body.classList.contains("theme-light");
+  setTheme(isLight?"dark":"light");
+}
+
+function loadTheme(){
+  try{const saved=localStorage.getItem("app_theme");setTheme(saved||"light");}
+  catch(e){setTheme("light");}
+}
+
+// ── Howto ─────────────────────────────────────────────────────────────
+function showHowto(){
+  const el=document.getElementById("howto-overlay");if(el)el.style.display="flex";
+}
+function closeHowto(){
+  const el=document.getElementById("howto-overlay");if(el)el.style.display="none";
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded",()=>{
+  loadLang();
+  applyTranslations();
+  loadTheme();
+  updateDisplay("0");
+  updateRunningTotal();
+  syncSalesLogQueue();
+  try{
+    const saved=localStorage.getItem("promptpay_id");
+    if(saved&&(/^\d{10}$/.test(saved)||/^\d{13}$/.test(saved))){
+      PROMPTPAY_ID=saved;
+      try{USER_NAME=localStorage.getItem("user_name")||"";}catch(e){}
+      setTheme(localStorage.getItem("app_theme")||"light");
+      applyTranslations();
+      goScreen("calc");
+    }else{
+      setTheme("light");
+      showSignInScreen();
+    }
+  }catch(e){
+    setTheme("light");
+    showSignInScreen();
+  }
+});
+
+</script>
+
+<!-- ════════ HOWTO OVERLAY ════════ -->
+<div id="howto-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9998;background:rgba(0,0,0,.6);flex-direction:column;align-items:stretch;justify-content:flex-end;">
+  <div id="howto-card" style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUpSheet .35s cubic-bezier(.32,1,.23,1) both;">
+    <style>@keyframes slideUpSheet{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
+    <div style="display:flex;justify-content:center;padding:12px 0 0;">
+      <div style="width:40px;height:4px;border-radius:2px;background:#E0E0E0;"></div>
+    </div>
+    <div style="padding:14px 24px 14px;text-align:center;border-bottom:1px solid #F0F0F0;">
+      <div id="howto-title" style="font-size:19px;font-weight:700;color:#1A1A1A;">วิธีการใช้งาน</div>
+      <div id="howto-subtitle" style="font-size:12px;color:#767676;margin-top:2px;">เครื่องคิดเงิน QR พร้อมเพย์</div>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:#F8F9FA;border-radius:14px;">
+        <div style="position:relative;flex-shrink:0;"><div style="width:44px;height:44px;border-radius:50%;background:#E8F0FE;display:flex;align-items:center;justify-content:center;"><svg fill="#1A73E8" width="20" height="20" viewBox="0 0 24 24"><path d="M6.62 10.79a15.053 15.053 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.01 21 3 13.99 3 5a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.24 1.02l-2.21 2.2z"/></svg></div><div style="position:absolute;top:-3px;left:-3px;width:18px;height:18px;border-radius:50%;background:#1A73E8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">1</div></div>
+        <div><div id="howto-step1-title" style="font-size:14px;font-weight:600;color:#1A1A1A;">ใส่เลขพร้อมเพย์</div><div id="howto-step1-desc" style="font-size:12px;color:#767676;margin-top:2px;">กรอกเบอร์โทร 10 หลัก หรือเลขบัตร 13 หลัก</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:#F8F9FA;border-radius:14px;">
+        <div style="position:relative;flex-shrink:0;"><div style="width:44px;height:44px;border-radius:50%;background:#E8F0FE;display:flex;align-items:center;justify-content:center;"><svg fill="#1A73E8" width="20" height="20" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg></div><div style="position:absolute;top:-3px;left:-3px;width:18px;height:18px;border-radius:50%;background:#1A73E8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">2</div></div>
+        <div><div id="howto-step2-title" style="font-size:14px;font-weight:600;color:#1A1A1A;">คิดราคาสินค้า</div><div id="howto-step2-desc" style="font-size:12px;color:#767676;margin-top:2px;">ใช้เครื่องคิดเลข บวก ลบ คูณ</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:#F8F9FA;border-radius:14px;">
+        <div style="position:relative;flex-shrink:0;"><div style="width:44px;height:44px;border-radius:50%;background:#E8F0FE;display:flex;align-items:center;justify-content:center;"><svg fill="#1A73E8" width="20" height="20" viewBox="0 0 24 24"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5z"/></svg></div><div style="position:absolute;top:-3px;left:-3px;width:18px;height:18px;border-radius:50%;background:#1A73E8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">3</div></div>
+        <div><div id="howto-step3-title" style="font-size:14px;font-weight:600;color:#1A1A1A;">สร้าง QR ชำระเงิน</div><div id="howto-step3-desc" style="font-size:12px;color:#767676;margin-top:2px;">กด "สร้าง QR" ระบบสร้าง QR มาตรฐาน EMVCo</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:#F8F9FA;border-radius:14px;">
+        <div style="position:relative;flex-shrink:0;"><div style="width:44px;height:44px;border-radius:50%;background:#E8F0FE;display:flex;align-items:center;justify-content:center;"><svg fill="#1A73E8" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></div><div style="position:absolute;top:-3px;left:-3px;width:18px;height:18px;border-radius:50%;background:#1A73E8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">4</div></div>
+        <div><div id="howto-step4-title" style="font-size:14px;font-weight:600;color:#1A1A1A;">ลูกค้าสแกนจ่าย</div><div id="howto-step4-desc" style="font-size:12px;color:#767676;margin-top:2px;">ลูกค้าสแกน QR ผ่านแอปธนาคารใดก็ได้</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;background:#F8F9FA;border-radius:14px;">
+        <div style="position:relative;flex-shrink:0;"><div style="width:44px;height:44px;border-radius:50%;background:#E8F0FE;display:flex;align-items:center;justify-content:center;"><svg fill="#1A73E8" width="20" height="20" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div><div style="position:absolute;top:-3px;left:-3px;width:18px;height:18px;border-radius:50%;background:#1A73E8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">5</div></div>
+        <div><div id="howto-step5-title" style="font-size:14px;font-weight:600;color:#1A1A1A;">ยืนยันรับเงินสำเร็จ</div><div id="howto-step5-desc" style="font-size:12px;color:#767676;margin-top:2px;">กด "ยืนยันรับเงินสำเร็จ" เพื่อบันทึกรายการ</div></div>
+      </div>
+    </div>
+    <div style="padding:8px 16px 32px;">
+      <button id="btn-howto-close" onclick="closeHowto()" style="width:100%;padding:14px;border:2px solid #1A73E8;border-radius:6px;background:#fff;color:#1A73E8;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;">เริ่มใช้งาน</button>
+      <div id="howto-footer" style="text-align:center;margin-top:10px;font-size:11px;color:#999;">PromptPay · EMVCo · ทุกธนาคารในไทย</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ PWA — Service Worker Registration ════════ -->
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js")
+      .then(reg => console.log("[PWA] Service Worker registered:", reg.scope))
+      .catch(err => console.warn("[PWA] Service Worker failed:", err));
+  });
+}
+</script>
+
+</body>
+</html>
