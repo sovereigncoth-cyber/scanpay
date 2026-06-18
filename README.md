@@ -1,0 +1,2 @@
+# scanpay
+PromptPay QR Calculator
